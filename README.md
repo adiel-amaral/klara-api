@@ -37,13 +37,14 @@ src/main/java/com/klaraapi/
 ├── repository/     Acesso ao banco de dados via Spring Data JPA
 ├── entity/         Entidades JPA mapeadas para as tabelas do banco
 ├── dto/            Objetos de entrada (Request) e saída (Response) da API
+├── enums/          Enumerações de domínio (status, recorrência)
 └── exception/      Tratamento centralizado de erros
 ```
 
 ### Stack
 
 | Tecnologia | Versão | Uso |
-|---|---|---|
+| --- | --- | --- |
 | Java | 21 | Linguagem principal |
 | Spring Boot | 4.0.6 | Framework base |
 | PostgreSQL | — | Banco de dados |
