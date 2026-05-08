@@ -26,9 +26,50 @@ A proposta é simples: você cadastra suas contas a pagar, o Klara te lembra ant
 
 ---
 
-## 🗂️ Estrutura do projeto
+## 🏛️ Arquitetura
 
-A API segue a arquitetura **Package by Layer**, onde o código é organizado por camada técnica. Cada pacote agrupa classes com a mesma responsabilidade, independente do domínio de negócio.
+A API segue o padrão **Layered Architecture** (Arquitetura em Camadas), organizada pelo estilo **Package by Layer**. Cada requisição percorre um caminho bem definido de responsabilidades:
+
+```
+Requisição HTTP
+      │
+      ▼
+ Controller        valida entrada (@Valid) e delega
+      │
+      ▼
+  Service          aplica regras de negócio; converte DTO ↔ Entity
+      │
+      ▼
+ Repository        abstrai o banco via Spring Data JPA
+      │
+      ▼
+  Database         PostgreSQL (Neon)
+```
+
+O `GlobalExceptionHandler` intercepta qualquer erro em qualquer camada antes de retornar ao cliente.
+
+### Camadas e responsabilidades
+
+| Camada | Pacote | Responsabilidade |
+| --- | --- | --- |
+| **Controller** | `controller/` | Recebe a requisição HTTP, aplica `@Valid` e devolve a resposta formatada |
+| **Service** | `service/` | Regras de negócio; única camada que conhece tanto DTOs quanto Entities |
+| **Repository** | `repository/` | Acesso a dados via `JpaRepository`; sem lógica de negócio |
+| **Entity** | `entity/` | Mapeamento da tabela; gerencia ciclo de vida com `@PrePersist` / `@PreUpdate` |
+| **DTO** | `dto/` | Desacopla o contrato da API do modelo de domínio; implementados como `record` |
+| **Enums** | `enums/` | Tipos de domínio com segurança em tempo de compilação (`BillStatus`, `Recurrence`) |
+| **Exception** | `exception/` | `@RestControllerAdvice` centraliza erros; separa validação (422) de regra de negócio (400) |
+
+### Decisões de design
+
+- **`record` para DTOs** — `BillRequestDTO` e `BillResponseDTO` são `record`s Java, garantindo imutabilidade e eliminando boilerplate de getters/construtores.
+- **Factory method no DTO** — `BillResponseDTO.from(Bill)` centraliza a conversão Entity → DTO, mantendo essa lógica em um único lugar.
+- **Ciclo de vida na Entity** — `@PrePersist` define o status inicial como `PENDING` e registra os timestamps; `@PreUpdate` mantém `updatedAt` sincronizado automaticamente.
+- **Exceções por semântica** — `BusinessException` resulta em HTTP 400 (regra de negócio violada); `MethodArgumentNotValidException` resulta em HTTP 422 (entrada inválida).
+
+---
+
+## 🗂️ Estrutura do projeto
 
 ```
 src/main/java/com/klaraapi/
@@ -47,7 +88,10 @@ src/main/java/com/klaraapi/
 | --- | --- | --- |
 | Java | 21 | Linguagem principal |
 | Spring Boot | 4.0.6 | Framework base |
-| PostgreSQL | — | Banco de dados |
+| PostgreSQL | — | Banco de dados (Neon) |
+| Lombok | — | Redução de boilerplate |
+| ModelMapper | 3.2.6 | Mapeamento DTO ↔ Entity |
+| Spring Validation | — | Validação de entrada |
 
 ---
 
