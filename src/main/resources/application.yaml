@@ -1,3 +1,31 @@
 spring:
   application:
     name: klara-api
+
+  datasource:
+    url: jdbc:postgresql://ep-blue-lab-acywid7y-pooler.sa-east-1.aws.neon.tech/klaradb?sslmode=require&channelBinding=require
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 3
+      minimum-idle: 1
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate.format_sql: true
+    open-in-view: false
+
+server:
+  servlet:
+    context-path: /klara
+
+logging:
+  level:
+    org.hibernate.orm.connections.pooling: WARN
