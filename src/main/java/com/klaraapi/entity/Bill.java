@@ -1,5 +1,7 @@
 package com.klaraapi.entity;
 
+import com.klaraapi.enums.BillStatus;
+import com.klaraapi.enums.Recurrence;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

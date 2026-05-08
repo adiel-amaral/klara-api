@@ -1,6 +1,6 @@
 package com.klaraapi.dto;
 
-import com.klaraapi.entity.Recurrence;
+import com.klaraapi.enums.Recurrence;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

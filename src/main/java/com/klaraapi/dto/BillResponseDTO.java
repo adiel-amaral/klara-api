@@ -1,8 +1,8 @@
 package com.klaraapi.dto;
 
 import com.klaraapi.entity.Bill;
-import com.klaraapi.entity.BillStatus;
-import com.klaraapi.entity.Recurrence;
+import com.klaraapi.enums.BillStatus;
+import com.klaraapi.enums.Recurrence;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
