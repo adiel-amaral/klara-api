@@ -89,9 +89,6 @@ src/main/java/com/klaraapi/
 | Java | 21 | Linguagem principal |
 | Spring Boot | 4.0.6 | Framework base |
 | PostgreSQL | — | Banco de dados (Neon) |
-| Lombok | — | Redução de boilerplate |
-| ModelMapper | 3.2.6 | Mapeamento DTO ↔ Entity |
-| Spring Validation | — | Validação de entrada |
 
 ---
 
