@@ -88,7 +88,7 @@ src/main/java/com/klaraapi/
 | --- | --- | --- |
 | Java | 21 | Linguagem principal |
 | Spring Boot | 4.0.6 | Framework base |
-| PostgreSQL | — | Banco de dados (Neon) |
+| PostgreSQL | — | Banco de dados |
 
 ---
 
