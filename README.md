@@ -46,10 +46,7 @@ src/main/java/com/klaraapi/
 |---|---|---|
 | Java | 21 | Linguagem principal |
 | Spring Boot | 4.0.6 | Framework base |
-| Spring Data JPA | — | Persistência |
-| PostgreSQL | — | Banco de dados (Neon / AWS sa-east-1) |
-| Lombok | — | Redução de boilerplate |
-| Bean Validation | — | Validação de entrada |
+| PostgreSQL | — | Banco de dados |
 
 ---
 
