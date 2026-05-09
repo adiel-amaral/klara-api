@@ -26,6 +26,12 @@ server:
   servlet:
     context-path: /klara
 
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    disable-swagger-default-url: true
+
 logging:
   level:
     org.hibernate.orm.connections.pooling: WARN
