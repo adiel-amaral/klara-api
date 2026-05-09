@@ -20,8 +20,8 @@ public class GlobalExceptionHandler {
                 .map(error -> Map.of("field", error.getField(), "message", message(error)))
                 .toList();
 
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(Map.of(
-                "status", HttpStatus.UNPROCESSABLE_ENTITY.value(),
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "status", HttpStatus.BAD_REQUEST.value(),
                 "message", "Dados inválidos",
                 "fields", fields,
                 "timestamp", LocalDateTime.now().toString()
@@ -30,8 +30,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<Map<String, Object>> handleBusiness(BusinessException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
-                "status", HttpStatus.BAD_REQUEST.value(),
+        return ResponseEntity.status(ex.getStatus()).body(Map.of(
+                "status", ex.getStatus().value(),
                 "message", ex.getMessage(),
                 "timestamp", LocalDateTime.now().toString()
         ));

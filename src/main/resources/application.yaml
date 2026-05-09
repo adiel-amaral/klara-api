@@ -26,6 +26,10 @@ server:
   servlet:
     context-path: /klara
 
+waha:
+  base-url: http://localhost:3000
+  session: default
+
 logging:
   level:
     org.hibernate.orm.connections.pooling: WARN
