@@ -1,6 +1,8 @@
 package com.klaraapi.exception;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -9,35 +11,36 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
-        List<Map<String, String>> fields = ex.getBindingResult().getFieldErrors().stream()
-                .map(error -> Map.of("field", error.getField(), "message", message(error)))
+    public ResponseEntity<ProblemDetail> handleValidation(MethodArgumentNotValidException ex) {
+        List<FieldDetail> fields = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> new FieldDetail(error.getField(), message(error)))
                 .toList();
 
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(Map.of(
-                "status", HttpStatus.UNPROCESSABLE_ENTITY.value(),
-                "message", "Dados inválidos",
-                "fields", fields,
-                "timestamp", LocalDateTime.now().toString()
-        ));
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(422), "Invalid data");
+        problem.setTitle("Validation error");
+        problem.setProperty("fields", fields);
+        problem.setProperty("timestamp", LocalDateTime.now());
+
+        return ResponseEntity.status(HttpStatusCode.valueOf(422)).body(problem);
     }
 
     @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<Map<String, Object>> handleBusiness(BusinessException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
-                "status", HttpStatus.BAD_REQUEST.value(),
-                "message", ex.getMessage(),
-                "timestamp", LocalDateTime.now().toString()
-        ));
+    public ResponseEntity<ProblemDetail> handleBusiness(BusinessException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problem.setTitle("Business rule violation");
+        problem.setProperty("timestamp", LocalDateTime.now());
+
+        return ResponseEntity.badRequest().body(problem);
     }
 
     private String message(FieldError error) {
-        return error.getDefaultMessage() != null ? error.getDefaultMessage() : "Valor inválido";
+        return error.getDefaultMessage() != null ? error.getDefaultMessage() : "Invalid value";
     }
+
+    private record FieldDetail(String field, String message) {}
 }
