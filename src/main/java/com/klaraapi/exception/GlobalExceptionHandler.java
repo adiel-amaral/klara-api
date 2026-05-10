@@ -15,6 +15,8 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final String TIMESTAMP = "timestamp";
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ProblemDetail> handleValidation(MethodArgumentNotValidException ex) {
         List<FieldDetail> fields = ex.getBindingResult().getFieldErrors().stream()
@@ -24,7 +26,7 @@ public class GlobalExceptionHandler {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(422), "Invalid data");
         problem.setTitle("Validation error");
         problem.setProperty("fields", fields);
-        problem.setProperty("timestamp", LocalDateTime.now());
+        problem.setProperty(TIMESTAMP, LocalDateTime.now());
 
         return ResponseEntity.status(HttpStatusCode.valueOf(422)).body(problem);
     }
@@ -33,9 +35,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ProblemDetail> handleBusiness(BusinessException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
         problem.setTitle("Business rule violation");
-        problem.setProperty("timestamp", LocalDateTime.now());
+        problem.setProperty(TIMESTAMP, LocalDateTime.now());
 
         return ResponseEntity.badRequest().body(problem);
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ProblemDetail> handleNotFound(ResourceNotFoundException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        problem.setTitle("Resource not found");
+        problem.setProperty(TIMESTAMP, LocalDateTime.now());
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem);
     }
 
     private String message(FieldError error) {
