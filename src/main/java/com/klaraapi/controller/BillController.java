@@ -20,8 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Bills", description = "Bill management")
 @RestController
-@RequestMapping("/bills")
 @RequiredArgsConstructor
+@RequestMapping("/bills")
 public class BillController {
 
     private final BillService service;

@@ -7,8 +7,8 @@ import com.klaraapi.repository.BillRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-@Service
 @RequiredArgsConstructor
+@Service
 public class BillService {
 
     private final BillRepository repository;
