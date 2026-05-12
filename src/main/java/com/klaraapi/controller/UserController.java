@@ -10,29 +10,28 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@AllArgsConstructor
 @RestController
 @RequestMapping("/users")
-@Tag(name = "Usuários", description = "Cadastro e gerenciamento de usuários")
+@Tag(name = "Users", description = "User registration and management")
 public class UserController {
 
     private final UserService userService;
 
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
 
     @PostMapping
-    @Operation(summary = "Cadastrar novo usuário", description = "Cria um novo usuário e envia mensagem de boas-vindas via WhatsApp")
+    @Operation(summary = "Register new user", description = "Creates a new user and sends a welcome message via WhatsApp")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Usuário criado com sucesso",
+            @ApiResponse(responseCode = "201", description = "User created successfully",
                     content = @Content(schema = @Schema(implementation = UserResponseDTO.class))),
-            @ApiResponse(responseCode = "400", description = "Dados de entrada inválidos",
+            @ApiResponse(responseCode = "400", description = "Invalid input data",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "409", description = "E-mail ou telefone já cadastrado",
+            @ApiResponse(responseCode = "409", description = "E-mail or phone already registered",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public ResponseEntity<UserResponseDTO> create(@Valid @RequestBody UserRequestDTO dto) {
@@ -43,7 +42,7 @@ public class UserController {
     @Schema(name = "ErrorResponse")
     public record ErrorResponse(
             @Schema(example = "409") int status,
-            @Schema(example = "E-mail já cadastrado") String message,
+            @Schema(example = "E-mail already registered") String message,
             @Schema(example = "2026-05-09T10:00:00") String timestamp
     ) {}
 }

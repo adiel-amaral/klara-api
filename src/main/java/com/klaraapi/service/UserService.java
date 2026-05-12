@@ -5,35 +5,30 @@ import com.klaraapi.dto.UserResponseDTO;
 import com.klaraapi.entity.UserProfile;
 import com.klaraapi.exception.BusinessException;
 import com.klaraapi.repository.UserProfileRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@AllArgsConstructor
+@Slf4j
 public class UserService {
-
-    private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
     private final UserProfileRepository userProfileRepository;
     private final WhatsAppService whatsAppService;
 
-    public UserService(UserProfileRepository userProfileRepository, WhatsAppService whatsAppService) {
-        this.userProfileRepository = userProfileRepository;
-        this.whatsAppService = whatsAppService;
-    }
-
     @Transactional
     public UserResponseDTO create(UserRequestDTO dto) {
         if (userProfileRepository.existsByEmail(dto.email())) {
-            throw new BusinessException("E-mail já cadastrado", HttpStatus.CONFLICT);
+            throw new BusinessException("E-mail already registered", HttpStatus.CONFLICT);
         }
         if (userProfileRepository.existsByPhone(dto.phone())) {
-            throw new BusinessException("Telefone já cadastrado", HttpStatus.CONFLICT);
+            throw new BusinessException("Phone already registered", HttpStatus.CONFLICT);
         }
         if (userProfileRepository.existsByCpf(dto.cpf())) {
-            throw new BusinessException("CPF já cadastrado", HttpStatus.CONFLICT);
+            throw new BusinessException("CPF already registered", HttpStatus.CONFLICT);
         }
         UserProfile userProfile = new UserProfile();
         userProfile.setName(dto.name());
@@ -58,7 +53,7 @@ public class UserService {
         try {
             whatsAppService.sendWelcomeMessage(user.getPhone(), name);
         } catch (Exception e) {
-            log.warn("Não foi possível enviar mensagem de boas-vindas via WhatsApp para {}: {}", user.getPhone(), e.getMessage());
+            log.warn("Could not send WhatsApp welcome message to {}: {}", user.getPhone(), e.getMessage());
         }
     }
 }

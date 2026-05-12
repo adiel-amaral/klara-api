@@ -1,7 +1,6 @@
 package com.klaraapi.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -18,9 +17,8 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Map;
 
 @Service
+@Slf4j
 public class WhatsAppService {
-
-    private static final Logger log = LoggerFactory.getLogger(WhatsAppService.class);
 
     @Value("${waha.base-url:http://localhost:3000}")
     private String wahaBaseUrl;
@@ -59,32 +57,32 @@ public class WhatsAppService {
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
-        log.info("Enviando mensagem de boas-vindas via WhatsApp para {} (tentativa será repetida em caso de falha)", phone);
+        log.info("Sending WhatsApp welcome message to {} (will retry on failure)", phone);
 
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
             if (response.getStatusCode().is2xxSuccessful()) {
-                log.info("Mensagem de boas-vindas enviada com sucesso via WhatsApp para {}", phone);
+                log.info("WhatsApp welcome message sent successfully to {}", phone);
             } else {
-                throw new WhatsAppSendException("WAHA retornou status " + response.getStatusCode());
+                throw new WhatsAppSendException("WAHA returned status " + response.getStatusCode());
             }
         } catch (ResourceAccessException e) {
-            log.error("Falha ao conectar ao WAHA para {}: {}", phone, e.getMessage());
+            log.error("Failed to connect to WAHA for {}: {}", phone, e.getMessage());
             throw e;
         } catch (Exception e) {
-            log.error("Erro inesperado ao enviar mensagem via WhatsApp para {}: {}", phone, e.getMessage());
-            throw new WhatsAppSendException("Falha ao enviar mensagem via WhatsApp", e);
+            log.error("Unexpected error sending WhatsApp message to {}: {}", phone, e.getMessage());
+            throw new WhatsAppSendException("Failed to send WhatsApp message", e);
         }
     }
 
     @Recover
     public void recover(ResourceAccessException ex, String phone, String name) {
-        log.error("Todas as tentativas de envio da mensagem de boas-vindas via WhatsApp para {} foram esgotadas. Intervenção manual pode ser necessária. Erro: {}", phone, ex.getMessage());
+        log.error("All attempts to send WhatsApp welcome message to {} have been exhausted. Manual intervention may be needed. Error: {}", phone, ex.getMessage());
     }
 
     @Recover
     public void recover(WhatsAppSendException ex, String phone, String name) {
-        log.error("Todas as tentativas de envio da mensagem de boas-vindas via WhatsApp para {} foram esgotadas. Intervenção manual pode ser necessária. Erro: {}", phone, ex.getMessage());
+        log.error("All attempts to send WhatsApp welcome message to {} have been exhausted. Manual intervention may be needed. Error: {}", phone, ex.getMessage());
     }
 
     private String buildWelcomeMessage(String name) {

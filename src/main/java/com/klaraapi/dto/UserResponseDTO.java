@@ -15,7 +15,8 @@ public record UserResponseDTO(
         Gender gender,
         String socialName,
         String phone,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt
 ) {
     public static UserResponseDTO from(UserProfile userProfile) {
         return new UserResponseDTO(
@@ -27,7 +28,8 @@ public record UserResponseDTO(
                 userProfile.getGender(),
                 userProfile.getSocialName(),
                 userProfile.getPhone(),
-                userProfile.getCreatedAt()
+                userProfile.getCreatedAt(),
+                userProfile.getUpdatedAt()
         );
     }
 }
