@@ -28,6 +28,9 @@ public class WhatsAppService {
     @Value("${waha.session:default}")
     private String wahaSession;
 
+    @Value("${waha.api-key:}")
+    private String wahaApiKey;
+
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Async
@@ -44,6 +47,9 @@ public class WhatsAppService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        if (wahaApiKey != null && !wahaApiKey.isBlank()) {
+            headers.set("X-Api-Key", wahaApiKey);
+        }
 
         Map<String, Object> body = Map.of(
                 "session", wahaSession,

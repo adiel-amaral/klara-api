@@ -16,6 +16,10 @@ public record UserRequestDTO(
         @Email(message = "Formato de e-mail inválido")
         String email,
 
+        @NotBlank(message = "O CPF é obrigatório")
+        @Pattern(regexp = "^\\d{11}$", message = "O CPF deve conter exatamente 11 dígitos numéricos")
+        String cpf,
+
         @NotNull(message = "A data de nascimento é obrigatória")
         LocalDate birthDate,
 

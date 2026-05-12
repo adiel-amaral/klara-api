@@ -11,7 +11,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "users", uniqueConstraints = {
         @UniqueConstraint(columnNames = "email"),
-        @UniqueConstraint(columnNames = "phone")
+        @UniqueConstraint(columnNames = "phone"),
+        @UniqueConstraint(columnNames = "cpf")
 })
 @Getter
 @Setter
@@ -38,6 +39,9 @@ public class UserProfile {
 
     @Column(nullable = false, unique = true)
     private String phone;
+
+    @Column(nullable = false, unique = true)
+    private String cpf;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

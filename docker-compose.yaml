@@ -1,16 +1,13 @@
 services:
   waha:
     image: devlikeapro/waha:latest
-    container_name: waha
+    container_name: waha-novo
     ports:
       - "3000:3000"
     environment:
       - WAHA_DASHBOARD_ENABLED=true
-      - WAHA_DASHBOARD_USERNAME=admin
-      - WAHA_DASHBOARD_PASSWORD=f8303852433940499393a162ecf0303d
       - WAHA_LOG_LEVEL=info
-      - WAHA_API_KEY=
-      - WAHA_NO_API_KEY=True
+      - WAHA_API_KEY=klara-waha-secret-key-2026
     volumes:
       - waha-sessions:/app/sessions
     restart: unless-stopped

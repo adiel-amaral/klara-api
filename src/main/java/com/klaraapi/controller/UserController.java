@@ -3,7 +3,6 @@ package com.klaraapi.controller;
 import com.klaraapi.dto.UserRequestDTO;
 import com.klaraapi.dto.UserResponseDTO;
 import com.klaraapi.service.UserService;
-import com.klaraapi.service.WhatsAppService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -21,11 +20,9 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
-    private final WhatsAppService whatsAppService;
 
-    public UserController(UserService userService, WhatsAppService whatsAppService) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.whatsAppService = whatsAppService;
     }
 
     @PostMapping
@@ -40,16 +37,6 @@ public class UserController {
     })
     public ResponseEntity<UserResponseDTO> create(@Valid @RequestBody UserRequestDTO dto) {
         UserResponseDTO response = userService.create(dto);
-
-        try {
-            String greetingName = dto.socialName() != null && !dto.socialName().isBlank()
-                    ? dto.socialName()
-                    : dto.name();
-            whatsAppService.sendWelcomeMessage(dto.phone(), greetingName);
-        } catch (Exception e) {
-            // Falha no WhatsApp NÃO deve reverter o cadastro
-        }
-
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
