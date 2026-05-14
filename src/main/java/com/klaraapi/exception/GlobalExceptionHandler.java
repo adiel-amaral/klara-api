@@ -1,7 +1,6 @@
 package com.klaraapi.exception;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -23,21 +22,21 @@ public class GlobalExceptionHandler {
                 .map(error -> new FieldDetail(error.getField(), message(error)))
                 .toList();
 
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(422), "Invalid data");
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Invalid data");
         problem.setTitle("Validation error");
         problem.setProperty("fields", fields);
         problem.setProperty(TIMESTAMP, LocalDateTime.now());
 
-        return ResponseEntity.status(HttpStatusCode.valueOf(422)).body(problem);
+        return ResponseEntity.badRequest().body(problem);
     }
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ProblemDetail> handleBusiness(BusinessException ex) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(ex.getStatus(), ex.getMessage());
         problem.setTitle("Business rule violation");
         problem.setProperty(TIMESTAMP, LocalDateTime.now());
 
-        return ResponseEntity.badRequest().body(problem);
+        return ResponseEntity.status(ex.getStatus()).body(problem);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)

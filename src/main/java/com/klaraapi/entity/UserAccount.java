@@ -9,14 +9,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "users", uniqueConstraints = {
+@Table(name = "user", uniqueConstraints = {
         @UniqueConstraint(columnNames = "email"),
-        @UniqueConstraint(columnNames = "phone"),
-        @UniqueConstraint(columnNames = "cpf")
+        @UniqueConstraint(columnNames = "phone")
 })
 @Getter
 @Setter
-public class UserProfile {
+public class UserAccount {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,8 +39,8 @@ public class UserProfile {
     @Column(nullable = false, unique = true)
     private String phone;
 
-    @Column(nullable = false, unique = true)
-    private String cpf;
+    @Column(nullable = false)
+    private boolean active = true;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

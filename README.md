@@ -146,7 +146,6 @@ Content-Type: application/json
 {
   "name": "Maria Silva",
   "email": "maria.silva@email.com",
-  "cpf": "12345678901",
   "birthDate": "1995-08-15",
   "gender": "FEMALE",
   "socialName": "Maria",
@@ -160,7 +159,6 @@ Content-Type: application/json
   "id": 1,
   "name": "Maria Silva",
   "email": "maria.silva@email.com",
-  "cpf": "12345678901",
   "birthDate": "1995-08-15",
   "gender": "FEMALE",
   "socialName": "Maria",
@@ -177,7 +175,7 @@ Após o cadastro, o usuário recebe automaticamente uma mensagem de boas-vindas 
 POST /klara/users
       │
       ▼
- UserService.create()     valida unicidade (email, telefone, CPF) e salva no banco
+ UserService.create()     valida unicidade (email, telefone) e salva no banco
       │
       ▼
  WhatsAppService          envia mensagem assíncrona via WAHA
