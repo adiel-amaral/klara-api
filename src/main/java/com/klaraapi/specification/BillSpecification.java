@@ -17,7 +17,8 @@ public class BillSpecification {
                 .where(hasStatus(filter.status()))
                 .and(hasRecurrence(filter.recurrence()))
                 .and(dueDateFrom(filter.dueDateFrom()))
-                .and(dueDateTo(filter.dueDateTo()));
+                .and(dueDateTo(filter.dueDateTo()))
+                .and(hasCategory(filter.categoryId()));
     }
 
     private static Specification<Bill> hasStatus(BillStatus status) {
@@ -38,5 +39,10 @@ public class BillSpecification {
     private static Specification<Bill> dueDateTo(LocalDate to) {
         return (root, query, cb) ->
                 to == null ? null : cb.lessThanOrEqualTo(root.get("dueDate"), to);
+    }
+
+    private static Specification<Bill> hasCategory(Long categoryId) {
+        return (root, query, cb) ->
+                categoryId == null ? null : cb.equal(root.get("category").get("id"), categoryId);
     }
 }

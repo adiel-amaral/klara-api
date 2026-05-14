@@ -41,6 +41,10 @@ public class Bill {
     @Column(nullable = false)
     private BillStatus status;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
+
     @Column(nullable = false, name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

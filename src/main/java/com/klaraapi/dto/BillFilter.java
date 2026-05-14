@@ -9,5 +9,6 @@ public record BillFilter(
         BillStatus status,
         Recurrence recurrence,
         LocalDate dueDateFrom,
-        LocalDate dueDateTo
+        LocalDate dueDateTo,
+        Long categoryId
 ) {}

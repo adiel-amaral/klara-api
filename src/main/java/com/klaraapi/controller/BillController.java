@@ -97,13 +97,14 @@ public class BillController {
             @Parameter(description = "Filter by recurrence") @RequestParam(required = false) Recurrence recurrence,
             @Parameter(description = "Due date from (yyyy-MM-dd)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dueDateFrom,
             @Parameter(description = "Due date to (yyyy-MM-dd)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dueDateTo,
+            @Parameter(description = "Filter by category id") @RequestParam(required = false) Long categoryId,
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Page size (max 100)") @RequestParam(defaultValue = "10") int size,
             @Parameter(description = "Sort field", schema = @Schema(allowableValues = {"dueDate", "amount", "createdAt", "name"}))
             @RequestParam(defaultValue = "dueDate") String sort,
             @Parameter(description = "Sort direction", schema = @Schema(allowableValues = {"asc", "desc"}))
             @RequestParam(defaultValue = "asc") String direction) {
-        var filter = new BillFilter(status, recurrence, dueDateFrom, dueDateTo);
+        var filter = new BillFilter(status, recurrence, dueDateFrom, dueDateTo, categoryId);
         return ResponseEntity.ok(service.findAll(filter, page, size, sort, direction));
     }
 }

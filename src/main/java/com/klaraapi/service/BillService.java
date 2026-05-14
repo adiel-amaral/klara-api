@@ -2,16 +2,19 @@ package com.klaraapi.service;
 
 import com.klaraapi.dto.*;
 import com.klaraapi.entity.Bill;
+import com.klaraapi.entity.Category;
 import com.klaraapi.enums.BillStatus;
 import com.klaraapi.exception.BusinessException;
 import com.klaraapi.exception.ResourceNotFoundException;
 import com.klaraapi.repository.BillRepository;
+import com.klaraapi.repository.CategoryRepository;
 import com.klaraapi.specification.BillSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.Set;
@@ -30,7 +33,9 @@ public class BillService {
     );
 
     private final BillRepository repository;
+    private final CategoryRepository categoryRepository;
 
+    @Transactional
     public BillResponseDTO create(BillRequestDTO request) {
         var bill = new Bill();
         bill.setName(request.name());
@@ -38,9 +43,11 @@ public class BillService {
         bill.setDueDate(request.dueDate());
         bill.setDescription(request.description());
         bill.setRecurrence(request.recurrence());
+        bill.setCategory(resolveCategory(request.categoryId()));
         return BillResponseDTO.from(repository.save(bill));
     }
 
+    @Transactional
     public BillResponseDTO update(Long id, BillUpdateRequestDTO request) {
         Bill bill = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Bill not found with id: " + id));
@@ -49,9 +56,11 @@ public class BillService {
         bill.setDueDate(request.dueDate());
         bill.setDescription(request.description());
         bill.setRecurrence(request.recurrence());
+        bill.setCategory(resolveCategory(request.categoryId()));
         return BillResponseDTO.from(repository.save(bill));
     }
 
+    @Transactional
     public BillResponseDTO updateStatus(Long id, BillStatusUpdateRequestDTO request) {
         Bill bill = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Bill not found with id: " + id));
@@ -72,6 +81,7 @@ public class BillService {
         repository.deleteById(id);
     }
 
+    @Transactional(readOnly = true)
     public Page<BillResponseDTO> findAll(BillFilter filter, int page, int size, String sort, String direction) {
         if (!ALLOWED_SORT_FIELDS.contains(sort)) {
             throw new BusinessException("Invalid sort field '" + sort + "'. Allowed: dueDate, amount, createdAt, name");
@@ -79,5 +89,11 @@ public class BillService {
         Sort.Direction sortDirection = direction.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
         var pageable = PageRequest.of(page, Math.min(size, 100), Sort.by(sortDirection, sort));
         return repository.findAll(BillSpecification.withFilter(filter), pageable).map(BillResponseDTO::from);
+    }
+
+    private Category resolveCategory(Long categoryId) {
+        if (categoryId == null) return null;
+        return categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + categoryId));
     }
 }
