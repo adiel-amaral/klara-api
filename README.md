@@ -65,7 +65,7 @@ O `GlobalExceptionHandler` intercepta qualquer erro em qualquer camada antes de 
 - **`record` para DTOs** — `BillRequestDTO` e `BillResponseDTO` são `record`s Java, garantindo imutabilidade e eliminando boilerplate de getters/construtores.
 - **Factory method no DTO** — `BillResponseDTO.from(Bill)` centraliza a conversão Entity → DTO, mantendo essa lógica em um único lugar.
 - **Ciclo de vida na Entity** — `@PrePersist` define o status inicial como `PENDING` e registra os timestamps; `@PreUpdate` mantém `updatedAt` sincronizado automaticamente.
-- **Exceções por semântica** — `BusinessException` resulta em HTTP 400 (regra de negócio violada); `MethodArgumentNotValidException` resulta em HTTP 422 (entrada inválida).
+- **Exceções por semântica** — `BusinessException` resulta em HTTP 400 (regra de negócio violada); `MethodArgumentNotValidException` resulta em HTTP 400 (entrada inválida).
 
 ---
 
@@ -163,6 +163,7 @@ Content-Type: application/json
   "gender": "FEMALE",
   "socialName": "Maria",
   "phone": "+5548999999999",
+  "active": true,
   "createdAt": "2026-05-11T10:30:00"
 }
 ```
@@ -175,10 +176,10 @@ Após o cadastro, o usuário recebe automaticamente uma mensagem de boas-vindas 
 POST /klara/users
       │
       ▼
- UserService.create()     valida unicidade (email, telefone) e salva no banco
+ UserAccountService.create()  valida unicidade (email, telefone) e salva no banco
       │
       ▼
- WhatsAppService          envia mensagem assíncrona via WAHA
+ WahaService              envia mensagem assíncrona via WAHA
       │
       ▼
  WAHA /api/sendText       entrega a mensagem no WhatsApp do usuário

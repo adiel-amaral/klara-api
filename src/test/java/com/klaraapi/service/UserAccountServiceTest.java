@@ -6,6 +6,7 @@ import com.klaraapi.entity.UserAccount;
 import com.klaraapi.enums.Gender;
 import com.klaraapi.exception.BusinessException;
 import com.klaraapi.exception.ResourceNotFoundException;
+import com.klaraapi.integration.waha.service.WahaService;
 import com.klaraapi.repository.UserAccountRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,9 @@ class UserAccountServiceTest {
 
     @Mock
     private UserAccountRepository userAccountRepository;
+
+    @Mock
+    private WahaService wahaService;
 
     @InjectMocks
     private UserAccountService userAccountService;
