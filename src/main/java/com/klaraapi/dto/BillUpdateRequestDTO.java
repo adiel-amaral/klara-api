@@ -28,5 +28,8 @@ public record BillUpdateRequestDTO(
 
         @Schema(description = "Recurrence type")
         @NotNull(message = "Recurrence is required")
-        Recurrence recurrence
+        Recurrence recurrence,
+
+        @Schema(description = "Category id (optional, null to remove)", example = "1")
+        Long categoryId
 ) {}
