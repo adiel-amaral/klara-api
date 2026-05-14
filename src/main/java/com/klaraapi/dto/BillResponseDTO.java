@@ -16,6 +16,7 @@ public record BillResponseDTO(
         String description,
         Recurrence recurrence,
         BillStatus status,
+        CategoryResponseDTO category,
         LocalDateTime createdAt
 ) {
     public static BillResponseDTO from(Bill bill) {
@@ -27,6 +28,7 @@ public record BillResponseDTO(
                 bill.getDescription(),
                 bill.getRecurrence(),
                 bill.getStatus(),
+                bill.getCategory() != null ? CategoryResponseDTO.from(bill.getCategory()) : null,
                 bill.getCreatedAt()
         );
     }
