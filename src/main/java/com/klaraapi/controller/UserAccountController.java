@@ -75,15 +75,15 @@ public class UserAccountController {
         return ResponseEntity.ok(userAccountService.update(id, dto));
     }
 
-    @Operation(summary = "Deactivate user", description = "Deactivates a user by ID (logical deletion)")
-    @ApiResponse(responseCode = "204", description = "User deactivated successfully")
+    @Operation(summary = "Delited user", description = "Delited a user by ID (logical deletion)")
+    @ApiResponse(responseCode = "204", description = "User Delited successfully")
     @ApiResponse(responseCode = "404", description = "User not found",
             content = @Content(mediaType = "application/problem+json",
                     schema = @Schema(implementation = ProblemDetail.class)))
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deactivate(
+    public ResponseEntity<Void> delited(
             @Parameter(description = "User ID") @PathVariable Long id) {
-        userAccountService.deactivateById(id);
+        userAccountService.delitedById(id);
         return ResponseEntity.noContent().build();
     }
 }

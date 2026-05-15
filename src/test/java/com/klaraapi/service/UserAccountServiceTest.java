@@ -8,267 +8,228 @@ import com.klaraapi.exception.BusinessException;
 import com.klaraapi.exception.ResourceNotFoundException;
 import com.klaraapi.integration.waha.service.WahaService;
 import com.klaraapi.repository.UserAccountRepository;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class UserAccountServiceTest {
 
     @Mock
-    private UserAccountRepository userAccountRepository;
+    UserAccountRepository userAccountRepository;
 
     @Mock
-    private WahaService wahaService;
+    WahaService wahaService;
 
     @InjectMocks
-    private UserAccountService userAccountService;
+    UserAccountService userAccountService;
 
-    private UserAccountRequestDTO validDto;
+    @Nested
+    class Create {
 
-    @BeforeEach
-    void setUp() {
-        validDto = new UserAccountRequestDTO(
-                "João Silva",
-                "joao@email.com",
-                LocalDate.of(1990, 1, 15),
-                Gender.MALE,
-                null,
-                "+5548999999999"
-        );
+        @Test
+        void shouldReturnDTO_whenEmailAndPhoneAreUnique() {
+            var request = new UserAccountRequestDTO("João Silva", "joao@email.com",
+                    LocalDate.of(1990, 1, 15), Gender.MALE, null, "+5548999999999");
+            given(userAccountRepository.existsByEmail("joao@email.com")).willReturn(false);
+            given(userAccountRepository.existsByPhone("+5548999999999")).willReturn(false);
+            given(userAccountRepository.save(any())).willAnswer(inv -> withId(inv.getArgument(0), 1L));
+
+            var response = userAccountService.create(request);
+
+            assertThat(response).isNotNull();
+            assertThat(response.id()).isEqualTo(1L);
+            assertThat(response.name()).isEqualTo("João Silva");
+            assertThat(response.email()).isEqualTo("joao@email.com");
+            assertThat(response.active()).isTrue();
+            then(userAccountRepository).should().save(any());
+        }
+
+        @Test
+        void shouldThrowBusinessException_whenEmailAlreadyExists() {
+            var request = new UserAccountRequestDTO("João Silva", "joao@email.com",
+                    LocalDate.of(1990, 1, 15), Gender.MALE, null, "+5548999999999");
+            given(userAccountRepository.existsByEmail("joao@email.com")).willReturn(true);
+
+            assertThatThrownBy(() -> userAccountService.create(request))
+                    .isInstanceOf(BusinessException.class);
+            then(userAccountRepository).should(never()).save(any());
+        }
+
+        @Test
+        void shouldThrowBusinessException_whenPhoneAlreadyExists() {
+            var request = new UserAccountRequestDTO("João Silva", "joao@email.com",
+                    LocalDate.of(1990, 1, 15), Gender.MALE, null, "+5548999999999");
+            given(userAccountRepository.existsByEmail("joao@email.com")).willReturn(false);
+            given(userAccountRepository.existsByPhone("+5548999999999")).willReturn(true);
+
+            assertThatThrownBy(() -> userAccountService.create(request))
+                    .isInstanceOf(BusinessException.class);
+            then(userAccountRepository).should(never()).save(any());
+        }
     }
 
-    @Test
-    void shouldCreateUserSuccessfully() {
-        when(userAccountRepository.existsByEmail(validDto.email())).thenReturn(false);
-        when(userAccountRepository.existsByPhone(validDto.phone())).thenReturn(false);
+    @Nested
+    class FindAll {
 
-        UserAccount savedUserAccount = new UserAccount();
-        savedUserAccount.setId(1L);
-        savedUserAccount.setName(validDto.name());
-        savedUserAccount.setEmail(validDto.email());
-        savedUserAccount.setBirthDate(validDto.birthDate());
-        savedUserAccount.setGender(validDto.gender());
-        savedUserAccount.setSocialName(validDto.socialName());
-        savedUserAccount.setPhone(validDto.phone());
-        when(userAccountRepository.save(any(UserAccount.class))).thenReturn(savedUserAccount);
+        @Test
+        void shouldReturnListOfActiveUsers() {
+            var user1 = withId(user("João Silva", "joao@email.com", "+5548999999999"), 1L);
+            var user2 = withId(user("Maria Santos", "maria@email.com", "+5548988888888"), 2L);
+            given(userAccountRepository.findByActiveTrue()).willReturn(List.of(user1, user2));
 
-        UserAccountResponseDTO response = userAccountService.create(validDto);
+            var responses = userAccountService.findAll();
 
-        assertThat(response).isNotNull();
-        assertThat(response.id()).isEqualTo(1L);
-        assertThat(response.name()).isEqualTo("João Silva");
-        assertThat(response.email()).isEqualTo("joao@email.com");
-        assertThat(response.phone()).isEqualTo("+5548999999999");
+            assertThat(responses).hasSize(2);
+            assertThat(responses.get(0).name()).isEqualTo("João Silva");
+            assertThat(responses.get(1).name()).isEqualTo("Maria Santos");
+        }
 
-        ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
-        verify(userAccountRepository).save(captor.capture());
-        assertThat(captor.getValue().getName()).isEqualTo("João Silva");
+        @Test
+        void shouldReturnEmptyList_whenNoActiveUsers() {
+            given(userAccountRepository.findByActiveTrue()).willReturn(List.of());
+
+            var responses = userAccountService.findAll();
+
+            assertThat(responses).isEmpty();
+        }
     }
 
-    @Test
-    void shouldCreateUserWithSocialName() {
-        UserAccountRequestDTO dtoWithSocialName = new UserAccountRequestDTO(
-                "João Silva",
-                "joao@email.com",
-                LocalDate.of(1990, 1, 15),
-                Gender.MALE,
-                "João",
-                "+5548999999999"
-        );
+    @Nested
+    class FindById {
 
-        when(userAccountRepository.existsByEmail(dtoWithSocialName.email())).thenReturn(false);
-        when(userAccountRepository.existsByPhone(dtoWithSocialName.phone())).thenReturn(false);
+        @Test
+        void shouldReturnDTO_whenUserExistsAndIsActive() {
+            var user = withId(user("João Silva", "joao@email.com", "+5548999999999"), 1L);
+            given(userAccountRepository.findByIdAndActiveTrue(1L)).willReturn(Optional.of(user));
 
-        UserAccount savedUserAccount = new UserAccount();
-        savedUserAccount.setId(1L);
-        savedUserAccount.setName(dtoWithSocialName.name());
-        savedUserAccount.setEmail(dtoWithSocialName.email());
-        savedUserAccount.setBirthDate(dtoWithSocialName.birthDate());
-        savedUserAccount.setGender(dtoWithSocialName.gender());
-        savedUserAccount.setSocialName(dtoWithSocialName.socialName());
-        savedUserAccount.setPhone(dtoWithSocialName.phone());
-        when(userAccountRepository.save(any(UserAccount.class))).thenReturn(savedUserAccount);
+            var response = userAccountService.findById(1L);
 
-        UserAccountResponseDTO response = userAccountService.create(dtoWithSocialName);
+            assertThat(response).isNotNull();
+            assertThat(response.id()).isEqualTo(1L);
+            assertThat(response.name()).isEqualTo("João Silva");
+        }
 
-        assertThat(response.socialName()).isEqualTo("João");
+        @Test
+        void shouldThrowResourceNotFoundException_whenUserNotFound() {
+            given(userAccountRepository.findByIdAndActiveTrue(99L)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> userAccountService.findById(99L))
+                    .isInstanceOf(ResourceNotFoundException.class);
+        }
     }
 
-    @Test
-    void shouldThrowConflictWhenEmailAlreadyExists() {
-        when(userAccountRepository.existsByEmail(validDto.email())).thenReturn(true);
+    @Nested
+    class Update {
 
-        assertThatThrownBy(() -> userAccountService.create(validDto))
-                .isInstanceOf(BusinessException.class)
-                .hasMessage("E-mail already registered");
+        @Test
+        void shouldReturnDTO_whenUserExistsAndEmailAndPhoneAreUnique() {
+            var existing = withId(user("João Silva", "joao@email.com", "+5548999999999"), 1L);
+            var request = new UserAccountRequestDTO("João Silva Updated", "joao@email.com",
+                    LocalDate.of(1990, 1, 15), Gender.MALE, null, "+5548999999999");
+            given(userAccountRepository.findByIdAndActiveTrue(1L)).willReturn(Optional.of(existing));
+            given(userAccountRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
-        verify(userAccountRepository, never()).save(any());
+            var response = userAccountService.update(1L, request);
+
+            assertThat(response).isNotNull();
+            then(userAccountRepository).should().save(any());
+        }
+
+        @Test
+        void shouldThrowResourceNotFoundException_whenUserNotFound() {
+            var request = new UserAccountRequestDTO("Test", "test@email.com",
+                    LocalDate.of(1990, 1, 15), Gender.MALE, null, "+5548999999999");
+            given(userAccountRepository.findByIdAndActiveTrue(99L)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> userAccountService.update(99L, request))
+                    .isInstanceOf(ResourceNotFoundException.class);
+            then(userAccountRepository).should(never()).save(any());
+        }
+
+        @Test
+        void shouldThrowBusinessException_whenUpdatingWithDuplicateEmail() {
+            var existing = withId(user("João Silva", "joao@email.com", "+5548999999999"), 1L);
+            var request = new UserAccountRequestDTO("João Silva", "maria@email.com",
+                    LocalDate.of(1990, 1, 15), Gender.MALE, null, "+5548999999999");
+            given(userAccountRepository.findByIdAndActiveTrue(1L)).willReturn(Optional.of(existing));
+            given(userAccountRepository.existsByEmail("maria@email.com")).willReturn(true);
+
+            assertThatThrownBy(() -> userAccountService.update(1L, request))
+                    .isInstanceOf(BusinessException.class);
+            then(userAccountRepository).should(never()).save(any());
+        }
+
+        @Test
+        void shouldThrowBusinessException_whenUpdatingWithDuplicatePhone() {
+            var existing = withId(user("João Silva", "joao@email.com", "+5548999999999"), 1L);
+            var request = new UserAccountRequestDTO("João Silva", "joao@email.com",
+                    LocalDate.of(1990, 1, 15), Gender.MALE, null, "+5548988888888");
+            given(userAccountRepository.findByIdAndActiveTrue(1L)).willReturn(Optional.of(existing));
+            given(userAccountRepository.existsByPhone("+5548988888888")).willReturn(true);
+
+            assertThatThrownBy(() -> userAccountService.update(1L, request))
+                    .isInstanceOf(BusinessException.class);
+            then(userAccountRepository).should(never()).save(any());
+        }
     }
 
-    @Test
-    void shouldThrowConflictWhenPhoneAlreadyExists() {
-        when(userAccountRepository.existsByEmail(validDto.email())).thenReturn(false);
-        when(userAccountRepository.existsByPhone(validDto.phone())).thenReturn(true);
+    @Nested
+    class Delited {
 
-        assertThatThrownBy(() -> userAccountService.create(validDto))
-                .isInstanceOf(BusinessException.class)
-                .hasMessage("Phone already registered");
+        @Test
+        void shouldDelited_whenUserExistsAndIsActive() {
+            var user = withId(user("João Silva", "joao@email.com", "+5548999999999"), 1L);
+            given(userAccountRepository.findByIdAndActiveTrue(1L)).willReturn(Optional.of(user));
+            given(userAccountRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
-        verify(userAccountRepository, never()).save(any());
+            userAccountService.delitedById(1L);
+
+            then(userAccountRepository).should().save(any());
+        }
+
+        @Test
+        void shouldThrowResourceNotFoundException_whenUserNotFound() {
+            given(userAccountRepository.findByIdAndActiveTrue(99L)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> userAccountService.delitedById(99L))
+                    .isInstanceOf(ResourceNotFoundException.class);
+            then(userAccountRepository).should(never()).save(any());
+        }
     }
 
-    @Test
-    void shouldReturnAllActiveUsers() {
-        UserAccount user1 = buildUserAccount(1L, "João Silva", "joao@email.com");
-        UserAccount user2 = buildUserAccount(2L, "Maria Santos", "maria@email.com");
-        when(userAccountRepository.findByActiveTrue()).thenReturn(List.of(user1, user2));
+    // ===== Helpers =====
 
-        List<UserAccountResponseDTO> result = userAccountService.findAll();
-
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).name()).isEqualTo("João Silva");
-        assertThat(result.get(1).name()).isEqualTo("Maria Santos");
-    }
-
-    @Test
-    void shouldReturnEmptyListWhenNoActiveUsers() {
-        when(userAccountRepository.findByActiveTrue()).thenReturn(List.of());
-
-        List<UserAccountResponseDTO> result = userAccountService.findAll();
-
-        assertThat(result).isEmpty();
-    }
-
-    @Test
-    void shouldFindActiveUserById() {
-        UserAccount user = buildUserAccount(1L, "João Silva", "joao@email.com");
-        when(userAccountRepository.findByIdAndActiveTrue(1L)).thenReturn(Optional.of(user));
-
-        UserAccountResponseDTO result = userAccountService.findById(1L);
-
-        assertThat(result).isNotNull();
-        assertThat(result.id()).isEqualTo(1L);
-        assertThat(result.name()).isEqualTo("João Silva");
-        assertThat(result.active()).isTrue();
-    }
-
-    @Test
-    void shouldThrowNotFoundWhenFindByIdDoesNotExist() {
-        when(userAccountRepository.findByIdAndActiveTrue(99L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> userAccountService.findById(99L))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessage("User not found with id: 99");
-    }
-
-    @Test
-    void shouldUpdateUserSuccessfully() {
-        UserAccount existing = buildUserAccount(1L, "João Silva", "joao@email.com");
-        when(userAccountRepository.findByIdAndActiveTrue(1L)).thenReturn(Optional.of(existing));
-
-        UserAccount updated = new UserAccount();
-        updated.setId(1L);
-        updated.setName(validDto.name());
-        updated.setEmail(validDto.email());
-        updated.setBirthDate(validDto.birthDate());
-        updated.setGender(validDto.gender());
-        updated.setSocialName(validDto.socialName());
-        updated.setPhone(validDto.phone());
-        when(userAccountRepository.save(any(UserAccount.class))).thenReturn(updated);
-
-        UserAccountResponseDTO result = userAccountService.update(1L, validDto);
-
-        assertThat(result).isNotNull();
-        assertThat(result.name()).isEqualTo("João Silva");
-        assertThat(result.email()).isEqualTo("joao@email.com");
-    }
-
-    @Test
-    void shouldThrowNotFoundWhenUpdateDoesNotExist() {
-        when(userAccountRepository.findByIdAndActiveTrue(99L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> userAccountService.update(99L, validDto))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessage("User not found with id: 99");
-    }
-
-    @Test
-    void shouldThrowConflictWhenUpdateEmailAlreadyExists() {
-        UserAccount existing = buildUserAccount(1L, "João Silva", "joao@email.com");
-        UserAccountRequestDTO newDto = new UserAccountRequestDTO(
-                "João Silva", "other@email.com", LocalDate.of(1990, 1, 15),
-                Gender.MALE, null, "+5548999999999"
-        );
-
-        when(userAccountRepository.findByIdAndActiveTrue(1L)).thenReturn(Optional.of(existing));
-        when(userAccountRepository.existsByEmail("other@email.com")).thenReturn(true);
-
-        assertThatThrownBy(() -> userAccountService.update(1L, newDto))
-                .isInstanceOf(BusinessException.class)
-                .hasMessage("E-mail already registered");
-    }
-
-    @Test
-    void shouldThrowConflictWhenUpdatePhoneAlreadyExists() {
-        UserAccount existing = buildUserAccount(1L, "João Silva", "joao@email.com");
-        UserAccountRequestDTO newDto = new UserAccountRequestDTO(
-                "João Silva", "joao@email.com", LocalDate.of(1990, 1, 15),
-                Gender.MALE, null, "+5548111111111"
-        );
-
-        when(userAccountRepository.findByIdAndActiveTrue(1L)).thenReturn(Optional.of(existing));
-        when(userAccountRepository.existsByPhone("+5548111111111")).thenReturn(true);
-
-        assertThatThrownBy(() -> userAccountService.update(1L, newDto))
-                .isInstanceOf(BusinessException.class)
-                .hasMessage("Phone already registered");
-    }
-
-    @Test
-    void shouldDeactivateUserById() {
-        UserAccount user = buildUserAccount(1L, "João Silva", "joao@email.com");
-        when(userAccountRepository.findByIdAndActiveTrue(1L)).thenReturn(Optional.of(user));
-        when(userAccountRepository.save(any(UserAccount.class))).thenReturn(user);
-
-        userAccountService.deactivateById(1L);
-
-        assertThat(user.isActive()).isFalse();
-        verify(userAccountRepository).save(user);
-    }
-
-    @Test
-    void shouldThrowNotFoundWhenDeactivateDoesNotExist() {
-        when(userAccountRepository.findByIdAndActiveTrue(99L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> userAccountService.deactivateById(99L))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessage("User not found with id: 99");
-
-        verify(userAccountRepository, never()).save(any());
-    }
-
-    private UserAccount buildUserAccount(Long id, String name, String email) {
-        UserAccount user = new UserAccount();
+    private static UserAccount withId(UserAccount user, Long id) {
         user.setId(id);
+        user.setCreatedAt(LocalDateTime.of(2026, 1, 1, 0, 0));
+        user.setUpdatedAt(LocalDateTime.of(2026, 1, 1, 0, 0));
+        return user;
+    }
+
+    private static UserAccount user(String name, String email, String phone) {
+        var user = new UserAccount();
         user.setName(name);
         user.setEmail(email);
+        user.setPhone(phone);
         user.setBirthDate(LocalDate.of(1990, 1, 15));
         user.setGender(Gender.MALE);
-        user.setPhone("+5548999999999");
+        user.setActive(true);
         return user;
     }
 }

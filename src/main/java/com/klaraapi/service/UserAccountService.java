@@ -82,7 +82,7 @@ public class UserAccountService {
     }
 
     @Transactional
-    public void deactivateById(Long id) {
+    public void delitedById(Long id) {
         UserAccount userAccount = userAccountRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
         userAccount.setActive(false);
