@@ -33,9 +33,9 @@ springdoc:
     disable-swagger-default-url: true
 
 waha:
-  base-url: http://localhost:3000
+  base-url: http://147.15.80.245:3000/
   session: default
-  api-key: klara-waha-secret-key-2026
+  api-key: ${WAHA_KEY_PASSWORD}
 
 logging:
   level:

@@ -19,7 +19,7 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 public class WahaService {
 
-    @Value("${waha.base-url:http://localhost:3000}")
+    @Value("${waha.base-url:http://147.15.80.245:3000}")
     private String wahaBaseUrl;
 
     @Value("${waha.session:default}")
