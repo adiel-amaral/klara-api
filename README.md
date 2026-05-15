@@ -65,7 +65,7 @@ O `GlobalExceptionHandler` intercepta qualquer erro em qualquer camada antes de 
 - **`record` para DTOs** — `BillRequestDTO` e `BillResponseDTO` são `record`s Java, garantindo imutabilidade e eliminando boilerplate de getters/construtores.
 - **Factory method no DTO** — `BillResponseDTO.from(Bill)` centraliza a conversão Entity → DTO, mantendo essa lógica em um único lugar.
 - **Ciclo de vida na Entity** — `@PrePersist` define o status inicial como `PENDING` e registra os timestamps; `@PreUpdate` mantém `updatedAt` sincronizado automaticamente.
-- **Exceções por semântica** — `BusinessException` resulta em HTTP 400 (regra de negócio violada); `MethodArgumentNotValidException` resulta em HTTP 422 (entrada inválida).
+- **Exceções por semântica** — `BusinessException` resulta em HTTP 400 (regra de negócio violada); `MethodArgumentNotValidException` resulta em HTTP 400 (entrada inválida).
 
 ---
 
@@ -89,6 +89,101 @@ src/main/java/com/klaraapi/
 | Java | 21 | Linguagem principal |
 | Spring Boot | 4.0.6 | Framework base |
 | PostgreSQL | — | Banco de dados |
+
+---
+
+## 📱 Integração WhatsApp (WAHA)
+
+Ao cadastrar um usuário via `POST /klara/users`, uma mensagem de boas-vindas é enviada automaticamente para o telefone do usuário via integração com o [WAHA](https://waha.devlike.pro/) (WhatsApp HTTP API).
+
+A mensagem é enviada de forma **assíncrona** com **retry** (3 tentativas com backoff exponencial).
+
+### Como usar o WAHA localmente
+
+#### 1. Subir o container
+
+```bash
+docker-compose up -d
+```
+
+Isso sobe o container `waha-novo` na porta `3000`.
+
+#### 2. Acessar o Dashboard
+
+Abra no navegador: [http://localhost:3000](http://localhost:3000)
+
+#### 3. Criar uma sessão
+
+1. Clique em **"Start new session"**
+2. Nomeie a sessão (ex.: `default`)
+3. Clique em **"Create"**
+
+#### 4. Escanear o QR Code
+
+1. Clique no nome da sessão criada
+2. Um **QR Code** será exibido na tela
+3. Abra o **WhatsApp** no celular → **Configurações** → **Aparelhos conectados** → **Conectar um aparelho**
+4. Escaneie o QR Code
+
+Após escanear, o status mudará para **"CONNECTED"**.
+
+> ⚠️ Mantenha o celular conectado à internet para que as mensagens sejam enviadas.
+
+### Testando o cadastro
+
+**Endpoint:**
+```
+POST http://localhost:8080/klara/users
+```
+
+**Headers:**
+```
+Content-Type: application/json
+```
+
+**Body:**
+```json
+{
+  "name": "Maria Silva",
+  "email": "maria.silva@email.com",
+  "birthDate": "1995-08-15",
+  "gender": "FEMALE",
+  "socialName": "Maria",
+  "phone": "+5548999999999"
+}
+```
+
+**Resposta (201 Created):**
+```json
+{
+  "id": 1,
+  "name": "Maria Silva",
+  "email": "maria.silva@email.com",
+  "birthDate": "1995-08-15",
+  "gender": "FEMALE",
+  "socialName": "Maria",
+  "phone": "+5548999999999",
+  "active": true,
+  "createdAt": "2026-05-11T10:30:00"
+}
+```
+
+Após o cadastro, o usuário recebe automaticamente uma mensagem de boas-vindas no WhatsApp.
+
+### Fluxo da integração
+
+```
+POST /klara/users
+      │
+      ▼
+ UserAccountService.create()  valida unicidade (email, telefone) e salva no banco
+      │
+      ▼
+ WahaService              envia mensagem assíncrona via WAHA
+      │
+      ▼
+ WAHA /api/sendText       entrega a mensagem no WhatsApp do usuário
+```
 
 ---
 

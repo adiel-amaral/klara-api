@@ -32,6 +32,11 @@ springdoc:
     operations-sorter: method
     disable-swagger-default-url: true
 
+waha:
+  base-url: http://147.15.80.245:3000/
+  session: default
+  api-key: ${WAHA_KEY_PASSWORD}
+
 logging:
   level:
     org.hibernate.orm.connections.pooling: WARN
